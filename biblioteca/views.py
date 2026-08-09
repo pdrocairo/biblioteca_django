@@ -62,7 +62,7 @@ def registrar_devolucoes(request):
             exemplar = Exemplar.objects.get(id=id_exemplar, disponivel=False)
 
             existe_emprestimo = Emprestimo.objects.filter(id_usuario_id=id_usuario, id_exemplar_id=id_exemplar, ativo=True).exists()
-
+        
             if existe_emprestimo:
 
                 emprestimo = Emprestimo.objects.get(id_usuario_id=id_usuario, id_exemplar_id=id_exemplar, ativo=True)
@@ -72,5 +72,9 @@ def registrar_devolucoes(request):
                 exemplar.disponivel=True
                 exemplar.save()
                 return HttpResponse("Devolucao feita com sucesso", status=200)
-
+            
+            return HttpResponse("Nao existe emprestimo realizado", status=400) 
+        
+        return HttpResponse("Exemplar não encontrado ou já está disponível", status=400) 
+    
     return HttpResponse("Request Method nao permitido", status=405)

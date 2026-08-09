@@ -11,14 +11,14 @@ class Categoria(models.Model):
     nome = models.CharField(max_length=100)
 
     def __str__(self):
-            return self.nome
+        return self.nome
     
 class Editora(models.Model):
     nome = models.CharField(max_length=100)
     cidade = models.CharField(max_length=100)
 
     def __str__(self):
-            return self.nome
+        return self.nome
     
 class Emprestimo(models.Model):
     id_exemplar = models.ForeignKey('Exemplar', on_delete=models.CASCADE)
@@ -27,7 +27,7 @@ class Emprestimo(models.Model):
     ativo = models.BooleanField(default=True)
 
     def __str__(self):
-            return f"Data de Retirada:{self.data_retirada} - Ativo{self.ativo}"
+        return f"Empréstimo #{self.id}"
 
 class Exemplar(models.Model):
     id_livro = models.ForeignKey('Livro', on_delete=models.CASCADE)
@@ -35,7 +35,7 @@ class Exemplar(models.Model):
     codigo_tombo = models.CharField(max_length=10)
 
     def __str__(self):
-         return f"Cód. Tombo {self.codigo_tombo} - Disponível {self.disponivel} - Id do Livro {self.id_livro}"
+        return self.codigo_tombo
 
 class Livro(models.Model):
     titulo = models.CharField(max_length=100)
@@ -44,7 +44,7 @@ class Livro(models.Model):
     id_editora = models.ForeignKey('Editora', on_delete=models.CASCADE)
 
     def __str__(self):
-         return f"Título {self.titulo} - ID da Categoria {self.id_categoria} - ID da Autor {self.id_autor} - ID da Editora {self.id_editora}"
+        return self.titulo
 
 class Usuario(models.Model):
     nome = models.CharField(max_length=100)
@@ -53,4 +53,4 @@ class Usuario(models.Model):
     perfil = models.CharField(max_length=20)
 
     def __str__(self):
-         return f"Nome {self.nome} - Email {self.email} - Perfil {self.perfil}"
+        return self.nome
