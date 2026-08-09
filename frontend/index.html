@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BiblioTech — Catálogo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="stampfield" aria-hidden="true"></div>
+
+  <!-- ===== TELA DE LOGIN ===== -->
+  <main id="tela-login" class="tela tela-login">
+    <div class="card-login">
+      <p class="eyebrow">BiblioTech · Sistema de Acervo</p>
+      <h1>Catálogo Geral</h1>
+      <p class="subtitulo">Acesso restrito ao bibliotecário</p>
+
+      <form id="form-login">
+        <label for="username">Usuário</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+
+        <button type="submit">Entrar no acervo</button>
+        <p id="erro-login" class="erro" hidden></p>
+      </form>
+    </div>
+  </main>
+
+  <!-- ===== TELA PRINCIPAL ===== -->
+  <main id="tela-app" class="tela tela-app" hidden>
+    <header class="topo">
+      <div>
+        <p class="eyebrow">BiblioTech</p>
+        <h1>Catálogo Geral</h1>
+      </div>
+      <button id="btn-logout" class="btn-fantasma">Sair</button>
+    </header>
+
+    <section id="aviso" class="aviso" hidden></section>
+
+    <section class="acervo">
+      <div class="acervo-topo">
+        <h2>Fichário de obras</h2>
+        <button id="btn-recarregar" class="btn-fantasma" title="Recarregar catálogo">↻ Atualizar</button>
+      </div>
+      <div id="lista-livros" class="grade-cartoes">
+        <p class="carregando">Consultando o acervo…</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== MODAL DE EMPRÉSTIMO ===== -->
+  <div id="modal-emprestimo" class="modal" hidden>
+    <div class="modal-cartao">
+      <p class="eyebrow">Ficha de retirada</p>
+      <h3 id="modal-livro-titulo">—</h3>
+      <label for="modal-id-usuario">Nº de matrícula do leitor</label>
+      <input type="number" id="modal-id-usuario" placeholder="ex: 1">
+      <div class="modal-acoes">
+        <button id="modal-cancelar" class="btn-fantasma">Cancelar</button>
+        <button id="modal-confirmar" class="btn-principal">Carimbar retirada</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
