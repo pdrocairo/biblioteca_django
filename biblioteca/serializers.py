@@ -12,16 +12,16 @@ class CategoriaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class LivroSerializer(serializers.ModelSerializer):
-    autor_nome = serializers.StringRelatedField(source='id_autor', read_only=True)
-    categoria_nome = serializers.StringRelatedField(source='id_categoria', read_only=True)
-    editora_nome = serializers.StringRelatedField(source='id_editora', read_only=True)
+    autor_nome = serializers.StringRelatedField(source='autor', read_only=True)
+    categoria_nome = serializers.StringRelatedField(source='categoria', read_only=True)
+    editora_nome = serializers.StringRelatedField(source='editora', read_only=True)
 
     class Meta:
         model = Livro
         fields = '__all__'
 
 class ExemplarSerializer(serializers.ModelSerializer):
-    livro_nome = serializers.StringRelatedField(source='id_livro', read_only=True)
+    livro_nome = serializers.StringRelatedField(source='livro', read_only=True)
 
     class Meta:
         model = Exemplar
@@ -29,8 +29,8 @@ class ExemplarSerializer(serializers.ModelSerializer):
 
 
 class EmprestimoSerializer(serializers.ModelSerializer):
-    exemplar_nome = serializers.StringRelatedField(source='id_exemplar', read_only=True)
-    usuario_nome = serializers.StringRelatedField(source='id_usuario', read_only=True)
+    exemplar_nome = serializers.StringRelatedField(source='exemplar', read_only=True)
+    usuario_nome = serializers.StringRelatedField(source='usuario', read_only=True)
 
     class Meta:
         model = Emprestimo

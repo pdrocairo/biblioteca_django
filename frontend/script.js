@@ -144,7 +144,7 @@ function desenharCartoes(livros, exemplares) {
 
   livros.forEach((livro) => {
     // Exemplares que pertencem a este livro
-    const exemplaresDoLivro = exemplares.filter((ex) => ex.id_livro === livro.id);
+    const exemplaresDoLivro = exemplares.filter((ex) => ex.livro === livro.id);
     const exemplarDisponivel = exemplaresDoLivro.find((ex) => ex.disponivel === true);
     const exemplarEmprestado = exemplaresDoLivro.find((ex) => ex.disponivel === false);
 
