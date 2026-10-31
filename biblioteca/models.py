@@ -21,8 +21,8 @@ class Editora(models.Model):
         return self.nome
     
 class Emprestimo(models.Model):
-    exemplar = models.ForeignKey('Exemplar', on_delete=models.CASCADE)
-    usuario = models.ForeignKey('Usuario', on_delete=models.CASCADE)
+    exemplar = models.ForeignKey('Exemplar', on_delete=models.PROTECT)
+    usuario = models.ForeignKey('Usuario', on_delete=models.PROTECT)
     data_retirada = models.DateField()  
     ativo = models.BooleanField(default=True)
 
