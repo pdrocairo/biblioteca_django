@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from biblioteca.views_api import (
+from biblioteca.views import (
     AutorViewSet, CategoriaViewSet, EditoraViewSet,
     LivroViewSet, ExemplarViewSet, UsuarioViewSet, EmprestimoViewSet
 )
