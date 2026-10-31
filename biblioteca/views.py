@@ -1,8 +1,10 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from datetime import date
 from biblioteca.models import Autor, Categoria, Livro, Editora, Usuario, Exemplar, Emprestimo
+from biblioteca.permissions import IsBibliotecario
 from biblioteca.serializers import (
     AutorSerializer, CategoriaSerializer, LivroSerializer, EditoraSerializer, UsuarioSerializer, ExemplarSerializer, EmprestimoSerializer
 )
@@ -26,6 +28,7 @@ class EditoraViewSet(viewsets.ModelViewSet):
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated, IsBibliotecario]
 
 class ExemplarViewSet(viewsets.ModelViewSet):
     queryset = Exemplar.objects.all()
@@ -36,7 +39,7 @@ class EmprestimoViewSet(viewsets.ModelViewSet):
     serializer_class = EmprestimoSerializer
 
 
-    @action(detail=False, methods=['POST'])
+    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, IsBibliotecario])
     def registrar_emprestimo(self, request):
     
         id_usuario = request.data.get("id_usuario")
@@ -64,7 +67,7 @@ class EmprestimoViewSet(viewsets.ModelViewSet):
         
         return Response({"erro": "Nao existe exemplares deste livro disponivel no momento"}, status=400)
 
-    @action(detail=False, methods=['PATCH'])
+    @action(detail=False, methods=['PATCH'], permission_classes=[IsAuthenticated, IsBibliotecario])
     def registrar_devolucoes(self, request):
 
         id_usuario = request.data.get("id_usuario")

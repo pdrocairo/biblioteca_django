@@ -234,7 +234,7 @@ async function registrarEmprestimo(idUsuario, idLivro) {
 
   const dados = await resposta.json();
   if (!resposta.ok) {
-    throw new Error(dados.erro || "Não foi possível registrar a retirada.");
+    throw new Error(dados.erro || dados.detail || "Não foi possível registrar a retirada.");
   }
 }
 
@@ -246,7 +246,7 @@ async function registrarDevolucao(idUsuario, idExemplar) {
 
   const dados = await resposta.json();
   if (!resposta.ok) {
-    throw new Error(dados.erro || "Não foi possível registrar a devolução.");
+    throw new Error(dados.erro || dados.detail || "Não foi possível registrar a devolução.");
   }
 }
 
