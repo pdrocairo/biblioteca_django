@@ -42,20 +42,20 @@ class EmprestimoViewSet(viewsets.ModelViewSet):
         id_usuario = request.data.get("id_usuario")
         id_livro = request.data.get("id_livro")
 
-        existe_emprestimo = Emprestimo.objects.filter(id_usuario_id = id_usuario, ativo=True).exists()
+        existe_emprestimo = Emprestimo.objects.filter(usuario_id = id_usuario, ativo=True).exists()
 
         if existe_emprestimo:
             return Response({"erro": "Usuario ja tem emprestimo ativo"}, status= 400)
 
-        existe_exemplar = Exemplar.objects.filter(id_livro_id=id_livro, disponivel=True).first()
+        existe_exemplar = Exemplar.objects.filter(livro_id=id_livro, disponivel=True).first()
 
         if existe_exemplar:
 
             existe_exemplar.disponivel = False
             existe_exemplar.save()
 
-            Emprestimo.objects.create(id_exemplar_id=existe_exemplar.id,
-                                    id_usuario_id=id_usuario,
+            Emprestimo.objects.create(exemplar_id=existe_exemplar.id,
+                                    usuario_id=id_usuario,
                                     data_retirada=date.today(),
                                     ativo=True
                                     )
@@ -76,11 +76,11 @@ class EmprestimoViewSet(viewsets.ModelViewSet):
 
             exemplar = Exemplar.objects.get(id=id_exemplar, disponivel=False)
 
-            existe_emprestimo = Emprestimo.objects.filter(id_usuario_id=id_usuario, id_exemplar_id=id_exemplar, ativo=True).exists()
+            existe_emprestimo = Emprestimo.objects.filter(usuario_id=id_usuario, exemplar_id=id_exemplar, ativo=True).exists()
 
             if existe_emprestimo:
 
-                emprestimo = Emprestimo.objects.get(id_usuario_id=id_usuario, id_exemplar_id=id_exemplar, ativo=True)
+                emprestimo = Emprestimo.objects.get(usuario_id=id_usuario, exemplar_id=id_exemplar, ativo=True)
 
                 emprestimo.ativo = False
                 emprestimo.save()
