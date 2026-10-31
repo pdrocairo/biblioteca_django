@@ -18,7 +18,7 @@ simples em HTML/CSS/JavaScript para demonstração.
 - Registro de devoluções, com data de devolução e atualização automática do exemplar
 - Regra de negócio transacional: se qualquer passo falhar, nada é gravado pela metade
 - Autenticação via JWT (tokens de acesso e renovação)
-- Perfis de acesso: só **bibliotecários** registram empréstimos/devoluções e gerenciam usuários
+- Perfis de acesso: qualquer usuário logado consulta o catálogo, mas só **bibliotecários** alteram dados, registram empréstimos/devoluções e gerenciam usuários
 - Senhas guardadas com hash (nunca aparecem na API) e configuração sensível em `.env`
 - Histórico preservado: não é possível apagar um usuário ou exemplar que já tenha empréstimos
 - Front-end mínimo para visualizar o catálogo e testar o fluxo de empréstimo/devolução
@@ -187,7 +187,7 @@ da seção do Docker.
 
 A suíte cobre empréstimo, bloqueio por empréstimo ativo, livro sem exemplar,
 devolução (incluindo exemplar que não está emprestado), acesso sem token (401),
-permissões por perfil (403), ausência de senha nas respostas, login JWT e a
+permissões por perfil (403), escrita restrita ao bibliotecário, ausência de senha nas respostas, login JWT e a
 proteção do histórico de empréstimos.
 
 ```bash
@@ -244,8 +244,8 @@ Cada `Usuario` está ligado a um `User` do Django (um único cadastro) e tem um
 
 | Perfil | Pode |
 |---|---|
-| `leitor` | Consultar o catálogo (livros, exemplares) |
-| `bibliotecario` | Tudo do leitor, mais registrar empréstimos/devoluções e gerenciar usuários |
+| `leitor` | Apenas consultar o catálogo (livros, autores, categorias, editoras, exemplares) |
+| `bibliotecario` | Tudo do leitor, mais cadastrar/alterar/remover itens do catálogo, ver e registrar empréstimos/devoluções e gerenciar usuários |
 
 Um superusuário criado com `createsuperuser` já é bibliotecário. Os demais
 usuários são cadastrados por um bibliotecário em `POST /api/usuarios/`.
@@ -258,17 +258,16 @@ Todos exigem o header `Authorization: Bearer <token>`, exceto os de `/api/token/
 |---|---|---|---|
 | POST | `/api/token/` | Login (gera os tokens JWT) | público |
 | POST | `/api/token/refresh/` | Renova o token de acesso | público |
-| GET, POST | `/api/livros/` | Lista / cadastra livros | autenticado |
-| GET, PUT, PATCH, DELETE | `/api/livros/{id}/` | Detalha / altera / remove um livro | autenticado |
-| GET, POST | `/api/autores/` | Autores (mesmo padrão em `/{id}/`) | autenticado |
-| GET, POST | `/api/categorias/` | Categorias (mesmo padrão em `/{id}/`) | autenticado |
-| GET, POST | `/api/editoras/` | Editoras (mesmo padrão em `/{id}/`) | autenticado |
-| GET, POST | `/api/exemplares/` | Exemplares (mesmo padrão em `/{id}/`) | autenticado |
-| GET | `/api/emprestimos/` | Lista os empréstimos | autenticado |
+| GET | `/api/livros/`, `/api/autores/`, `/api/categorias/`, `/api/editoras/`, `/api/exemplares/` | Lista (e detalha em `/{id}/`) | autenticado |
+| POST, PUT, PATCH, DELETE | os mesmos endpoints | Cadastra / altera / remove | bibliotecário |
+| GET | `/api/emprestimos/` e `/api/emprestimos/{id}/` | Consulta os empréstimos (somente leitura) | bibliotecário |
 | POST | `/api/emprestimos/registrar_emprestimo/` | Registra um empréstimo | bibliotecário |
 | PATCH | `/api/emprestimos/registrar_devolucoes/` | Registra uma devolução | bibliotecário |
 | GET, POST | `/api/usuarios/` | Lista / cadastra usuários | bibliotecário |
 | GET, PUT, PATCH, DELETE | `/api/usuarios/{id}/` | Detalha / altera / remove um usuário | bibliotecário |
+
+Empréstimos não podem ser criados nem alterados pela rota genérica (`POST /api/emprestimos/`
+responde `405`): eles só nascem e terminam pelas duas ações acima, que passam pela regra de negócio.
 
 ### Empréstimo e devolução
 
@@ -312,7 +311,6 @@ A senha é validada pelos validadores do Django e guardada com hash. Ela nunca
 ## 🗺️ Próximos passos
 
 - [ ] Documentação automática da API (Swagger com `drf-spectacular`)
-- [ ] Restringir escrita em livros, autores etc. ao bibliotecário
 - [ ] Servidor de produção na imagem Docker (`gunicorn` + `whitenoise`)
 - [ ] Deploy do backend (Render/Railway) e do front-end (Vercel)
 - [ ] Migrar o front-end para React
