@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 class Autor(models.Model):
@@ -47,10 +48,17 @@ class Livro(models.Model):
         return self.titulo
 
 class Usuario(models.Model):
+    PERFIL_LEITOR = 'leitor'
+    PERFIL_BIBLIOTECARIO = 'bibliotecario'
+    PERFIS = [
+        (PERFIL_LEITOR, 'Leitor'),
+        (PERFIL_BIBLIOTECARIO, 'Bibliotecário'),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     nome = models.CharField(max_length=100)
     email = models.EmailField()
-    senha = models.CharField(max_length=128)
-    perfil = models.CharField(max_length=20)
+    perfil = models.CharField(max_length=20, choices=PERFIS, default=PERFIL_LEITOR)
 
     def __str__(self):
         return self.nome
