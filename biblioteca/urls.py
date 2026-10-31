@@ -1,9 +1,17 @@
-from django.urls import path
-from biblioteca import views
+from rest_framework.routers import DefaultRouter
+from biblioteca.views import (
+    AutorViewSet, CategoriaViewSet, EditoraViewSet,
+    LivroViewSet, ExemplarViewSet, UsuarioViewSet, EmprestimoViewSet
+)
 
-urlpatterns = [
-    path('autores/', views.listar_autores),
-    path('', views.pagina_inicial),
-    path('registrar/emprestimo/', views.registrar_emprestimo),
-    path('registrar/devolucao/', views.registrar_devolucoes)
-]
+router = DefaultRouter()
+
+router.register('autores', AutorViewSet)
+router.register('categorias', CategoriaViewSet)
+router.register('editoras', EditoraViewSet)
+router.register('livros', LivroViewSet)
+router.register('exemplares', ExemplarViewSet)
+router.register('usuarios', UsuarioViewSet)
+router.register('emprestimos', EmprestimoViewSet)
+
+urlpatterns = router.urls

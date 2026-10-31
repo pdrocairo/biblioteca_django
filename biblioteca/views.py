@@ -1,80 +1,79 @@
-import json
-from django.shortcuts import render
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from biblioteca.models import Autor, Emprestimo, Editora, Exemplar, Usuario, Livro, Categoria
-from datetime import date
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from biblioteca import services
+from biblioteca.models import Autor, Categoria, Livro, Editora, Usuario, Exemplar, Emprestimo
+from biblioteca.permissions import IsBibliotecario
+from biblioteca.services import ErroDeNegocio
+from biblioteca.serializers import (
+    AutorSerializer, CategoriaSerializer, LivroSerializer, EditoraSerializer, UsuarioSerializer, ExemplarSerializer, EmprestimoSerializer,
+    RegistrarEmprestimoSerializer, RegistrarDevolucaoSerializer,
+)
+
+def _primeiro_erro(erros):
+    campo, mensagens = next(iter(erros.items()))
+    return f"{campo}: {mensagens[0]}"
 
 
-def pagina_inicial(request):
-    return HttpResponse("Bem-Vindo ao BiblioTech!")
+class AutorViewSet(viewsets.ModelViewSet):
+    queryset = Autor.objects.all()
+    serializer_class = AutorSerializer
 
-def listar_autores(request):
-    autores = Autor.objects.all()
-    texto = ", ".join([autor.nome for autor in autores])
-    return HttpResponse(f"Autores: {texto}")
+class CategoriaViewSet(viewsets.ModelViewSet):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
 
-@csrf_exempt
-def registrar_emprestimo(request):
-    if request.method == "POST":
-        #para buscar emprestimo
-        dados = json.loads(request.body)
-        id_usuario = dados.get("id_usuario")
-        #para buscar exemplar
-        id_livro = dados.get("id_livro")
+class LivroViewSet(viewsets.ModelViewSet):
+    queryset = Livro.objects.all()
+    serializer_class = LivroSerializer
 
-        existe_emprestimo = Emprestimo.objects.filter(id_usuario_id = id_usuario, ativo=True).exists()
+class EditoraViewSet(viewsets.ModelViewSet):
+    queryset = Editora.objects.all()
+    serializer_class = EditoraSerializer
 
-        if existe_emprestimo:
-            return HttpResponse("Usuario ja tem emprestimo ativo", status= 400)
+class UsuarioViewSet(viewsets.ModelViewSet):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated, IsBibliotecario]
 
-        existe_exemplar = Exemplar.objects.filter(id_livro_id=id_livro, disponivel=True).first()
+class ExemplarViewSet(viewsets.ModelViewSet):
+    queryset = Exemplar.objects.all()
+    serializer_class = ExemplarSerializer
 
-        if existe_exemplar:
-
-            existe_exemplar.disponivel = False
-            existe_exemplar.save()
-
-            Emprestimo.objects.create(id_exemplar_id=existe_exemplar.id,
-                                    id_usuario_id=id_usuario,
-                                    data_retirada=date.today(),
-                                    ativo=True
-                                    )
-
-            return HttpResponse("Emprestimo criado com sucesso!")
-        
-        return HttpResponse("Nao existe exemplares deste livro disponivel no momento", status=400)
-    
-    return HttpResponse("Request Method nao permitido", status=405)
+class EmprestimoViewSet(viewsets.ModelViewSet):
+    queryset = Emprestimo.objects.all()
+    serializer_class = EmprestimoSerializer
 
 
-@csrf_exempt
-def registrar_devolucoes(request):
-    if request.method == "PATCH":
-        dados = json.loads(request.body)
-        id_usuario = dados.get("id_usuario")
-        id_exemplar = dados.get("id_exemplar")
+    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, IsBibliotecario])
+    def registrar_emprestimo(self, request):
+        entrada = RegistrarEmprestimoSerializer(data=request.data)
+        if not entrada.is_valid():
+            return Response({"erro": _primeiro_erro(entrada.errors)}, status=status.HTTP_400_BAD_REQUEST)
 
-        existe_exemplar = Exemplar.objects.filter(id=id_exemplar, disponivel=False).exists()
+        try:
+            services.registrar_emprestimo(
+                usuario_id=entrada.validated_data['id_usuario'],
+                livro_id=entrada.validated_data['id_livro'],
+            )
+        except ErroDeNegocio as erro:
+            return Response({"erro": erro.mensagem}, status=erro.status_code)
 
-        if existe_exemplar:
+        return Response({"sucesso": "Emprestimo criado com sucesso!"}, status=status.HTTP_201_CREATED)
 
-            exemplar = Exemplar.objects.get(id=id_exemplar, disponivel=False)
+    @action(detail=False, methods=['PATCH'], permission_classes=[IsAuthenticated, IsBibliotecario])
+    def registrar_devolucoes(self, request):
+        entrada = RegistrarDevolucaoSerializer(data=request.data)
+        if not entrada.is_valid():
+            return Response({"erro": _primeiro_erro(entrada.errors)}, status=status.HTTP_400_BAD_REQUEST)
 
-            existe_emprestimo = Emprestimo.objects.filter(id_usuario_id=id_usuario, id_exemplar_id=id_exemplar, ativo=True).exists()
-        
-            if existe_emprestimo:
+        try:
+            services.registrar_devolucao(
+                usuario_id=entrada.validated_data['id_usuario'],
+                exemplar_id=entrada.validated_data['id_exemplar'],
+            )
+        except ErroDeNegocio as erro:
+            return Response({"erro": erro.mensagem}, status=erro.status_code)
 
-                emprestimo = Emprestimo.objects.get(id_usuario_id=id_usuario, id_exemplar_id=id_exemplar, ativo=True)
-
-                emprestimo.ativo = False
-                emprestimo.save()
-                exemplar.disponivel=True
-                exemplar.save()
-                return HttpResponse("Devolucao feita com sucesso", status=200)
-            
-            return HttpResponse("Nao existe emprestimo realizado", status=400) 
-        
-        return HttpResponse("Exemplar não encontrado ou já está disponível", status=400) 
-    
-    return HttpResponse("Request Method nao permitido", status=405)
+        return Response({"sucesso": "Devolucao feita com sucesso"}, status=status.HTTP_200_OK)

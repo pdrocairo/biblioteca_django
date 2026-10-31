@@ -144,7 +144,7 @@ function desenharCartoes(livros, exemplares) {
 
   livros.forEach((livro) => {
     // Exemplares que pertencem a este livro
-    const exemplaresDoLivro = exemplares.filter((ex) => ex.id_livro === livro.id);
+    const exemplaresDoLivro = exemplares.filter((ex) => ex.livro === livro.id);
     const exemplarDisponivel = exemplaresDoLivro.find((ex) => ex.disponivel === true);
     const exemplarEmprestado = exemplaresDoLivro.find((ex) => ex.disponivel === false);
 
@@ -234,7 +234,7 @@ async function registrarEmprestimo(idUsuario, idLivro) {
 
   const dados = await resposta.json();
   if (!resposta.ok) {
-    throw new Error(dados.erro || "Não foi possível registrar a retirada.");
+    throw new Error(dados.erro || dados.detail || "Não foi possível registrar a retirada.");
   }
 }
 
@@ -246,7 +246,7 @@ async function registrarDevolucao(idUsuario, idExemplar) {
 
   const dados = await resposta.json();
   if (!resposta.ok) {
-    throw new Error(dados.erro || "Não foi possível registrar a devolução.");
+    throw new Error(dados.erro || dados.detail || "Não foi possível registrar a devolução.");
   }
 }
 
