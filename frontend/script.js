@@ -2,9 +2,9 @@
 // BiblioTech — front mínimo em JS puro, consumindo a API DRF
 // ============================================================
 
-// Endereço base da API Django. Ajuste se o servidor rodar em
-// outra porta/host.
-const API_BASE = "http://127.0.0.1:8000/api";
+// Endereço base da API Django. Definido em config.js; ajuste lá se o
+// servidor rodar em outra porta/host.
+const API_BASE = window.BIBLIOTECH_API_BASE || "http://127.0.0.1:8000/api";
 
 // Referências dos elementos da tela
 const telaLogin = document.getElementById("tela-login");
