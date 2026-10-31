@@ -1,0 +1,46 @@
+services:
+  # API Django
+  - type: web
+    name: bibliotech-api
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    # No plano gratuito nao ha Shell: o primeiro bibliotecario e criado pelas
+    # variaveis DJANGO_SUPERUSER_* (se ele ja existir, o comando so falha e segue).
+    startCommand: sh -c "python manage.py createsuperuser --noinput || true; gunicorn bibliotech_django.wsgi"
+    healthCheckPath: /admin/login/
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bibliotech-db
+          property: connectionString
+      # Preencher no painel (veja o README, secao Deploy)
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
+
+  # Front-end estatico
+  - type: web
+    name: bibliotech-web
+    runtime: static
+    buildCommand: echo "window.BIBLIOTECH_API_BASE = \"${API_URL}/api\";" > frontend/config.js
+    staticPublishPath: ./frontend
+    envVars:
+      # URL publica da API, ex.: https://bibliotech-api.onrender.com
+      - key: API_URL
+        sync: false
+
+databases:
+  - name: bibliotech-db
+    plan: free
+    databaseName: bibliotech
+    user: bibliotech
