@@ -89,3 +89,16 @@ class EditoraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Editora
         fields = '__all__'
+
+
+ID_MAXIMO = 2147483647
+
+
+class RegistrarEmprestimoSerializer(serializers.Serializer):
+    id_usuario = serializers.IntegerField(min_value=1, max_value=ID_MAXIMO)
+    id_livro = serializers.IntegerField(min_value=1, max_value=ID_MAXIMO)
+
+
+class RegistrarDevolucaoSerializer(serializers.Serializer):
+    id_usuario = serializers.IntegerField(min_value=1, max_value=ID_MAXIMO)
+    id_exemplar = serializers.IntegerField(min_value=1, max_value=ID_MAXIMO)

@@ -1,13 +1,20 @@
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from datetime import date
+from biblioteca import services
 from biblioteca.models import Autor, Categoria, Livro, Editora, Usuario, Exemplar, Emprestimo
 from biblioteca.permissions import IsBibliotecario
+from biblioteca.services import ErroDeNegocio
 from biblioteca.serializers import (
-    AutorSerializer, CategoriaSerializer, LivroSerializer, EditoraSerializer, UsuarioSerializer, ExemplarSerializer, EmprestimoSerializer
+    AutorSerializer, CategoriaSerializer, LivroSerializer, EditoraSerializer, UsuarioSerializer, ExemplarSerializer, EmprestimoSerializer,
+    RegistrarEmprestimoSerializer, RegistrarDevolucaoSerializer,
 )
+
+def _primeiro_erro(erros):
+    campo, mensagens = next(iter(erros.items()))
+    return f"{campo}: {mensagens[0]}"
+
 
 class AutorViewSet(viewsets.ModelViewSet):
     queryset = Autor.objects.all()
@@ -41,60 +48,32 @@ class EmprestimoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, IsBibliotecario])
     def registrar_emprestimo(self, request):
-    
-        id_usuario = request.data.get("id_usuario")
-        id_livro = request.data.get("id_livro")
+        entrada = RegistrarEmprestimoSerializer(data=request.data)
+        if not entrada.is_valid():
+            return Response({"erro": _primeiro_erro(entrada.errors)}, status=status.HTTP_400_BAD_REQUEST)
 
-        existe_emprestimo = Emprestimo.objects.filter(usuario_id = id_usuario, ativo=True).exists()
+        try:
+            services.registrar_emprestimo(
+                usuario_id=entrada.validated_data['id_usuario'],
+                livro_id=entrada.validated_data['id_livro'],
+            )
+        except ErroDeNegocio as erro:
+            return Response({"erro": erro.mensagem}, status=erro.status_code)
 
-        if existe_emprestimo:
-            return Response({"erro": "Usuario ja tem emprestimo ativo"}, status= 400)
-
-        existe_exemplar = Exemplar.objects.filter(livro_id=id_livro, disponivel=True).first()
-
-        if existe_exemplar:
-
-            existe_exemplar.disponivel = False
-            existe_exemplar.save()
-
-            Emprestimo.objects.create(exemplar_id=existe_exemplar.id,
-                                    usuario_id=id_usuario,
-                                    data_retirada=date.today(),
-                                    ativo=True
-                                    )
-
-            return Response({"sucesso": "Emprestimo criado com sucesso!"}, status=201)
-        
-        return Response({"erro": "Nao existe exemplares deste livro disponivel no momento"}, status=400)
+        return Response({"sucesso": "Emprestimo criado com sucesso!"}, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['PATCH'], permission_classes=[IsAuthenticated, IsBibliotecario])
     def registrar_devolucoes(self, request):
+        entrada = RegistrarDevolucaoSerializer(data=request.data)
+        if not entrada.is_valid():
+            return Response({"erro": _primeiro_erro(entrada.errors)}, status=status.HTTP_400_BAD_REQUEST)
 
-        id_usuario = request.data.get("id_usuario")
-        id_exemplar = request.data.get("id_exemplar")
+        try:
+            services.registrar_devolucao(
+                usuario_id=entrada.validated_data['id_usuario'],
+                exemplar_id=entrada.validated_data['id_exemplar'],
+            )
+        except ErroDeNegocio as erro:
+            return Response({"erro": erro.mensagem}, status=erro.status_code)
 
-        existe_exemplar = Exemplar.objects.filter(id=id_exemplar, disponivel=False).exists()
-
-        if existe_exemplar:
-
-            exemplar = Exemplar.objects.get(id=id_exemplar, disponivel=False)
-
-            existe_emprestimo = Emprestimo.objects.filter(usuario_id=id_usuario, exemplar_id=id_exemplar, ativo=True).exists()
-
-            if existe_emprestimo:
-
-                emprestimo = Emprestimo.objects.get(usuario_id=id_usuario, exemplar_id=id_exemplar, ativo=True)
-
-                emprestimo.ativo = False
-                emprestimo.save()
-                exemplar.disponivel=True
-                exemplar.save()
-                return Response({"sucesso": "Devolucao feita com sucesso"}, status=200)
-            
-            return Response({"erro": "Nao existe emprestimo realizado"}, status=400) 
-                    
-        return Response({"erro": "Exemplar não encontrado ou já está disponível"}, status=400) 
-
-
-
-
+        return Response({"sucesso": "Devolucao feita com sucesso"}, status=status.HTTP_200_OK)

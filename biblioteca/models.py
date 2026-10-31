@@ -25,6 +25,7 @@ class Emprestimo(models.Model):
     exemplar = models.ForeignKey('Exemplar', on_delete=models.PROTECT)
     usuario = models.ForeignKey('Usuario', on_delete=models.PROTECT)
     data_retirada = models.DateField()  
+    data_devolucao = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
 
     def __str__(self):
