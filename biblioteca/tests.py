@@ -283,3 +283,62 @@ class SuperusuarioTests(APITestCase):
         user = User.objects.create_user(username='comum', password=SENHA)
 
         self.assertFalse(Usuario.objects.filter(user=user).exists())
+
+
+class EscritaRestritaTests(BaseTestCase):
+    def test_leitor_le_o_catalogo_mas_nao_escreve(self):
+        self.autenticar(self.leitor)
+        recursos = {
+            'livros': self.livro.id,
+            'exemplares': self.exemplar.id,
+            'autores': self.livro.autor_id,
+            'categorias': self.livro.categoria_id,
+            'editoras': self.livro.editora_id,
+        }
+        for recurso, pk in recursos.items():
+            with self.subTest(recurso=recurso):
+                self.assertEqual(
+                    self.client.get(f'/api/{recurso}/').status_code, status.HTTP_200_OK)
+                self.assertEqual(
+                    self.client.post(f'/api/{recurso}/', {}, format='json').status_code,
+                    status.HTTP_403_FORBIDDEN)
+                self.assertEqual(
+                    self.client.patch(f'/api/{recurso}/{pk}/', {}, format='json').status_code,
+                    status.HTTP_403_FORBIDDEN)
+                self.assertEqual(
+                    self.client.delete(f'/api/{recurso}/{pk}/').status_code,
+                    status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Livro.objects.filter(pk=self.livro.pk).exists())
+
+    def test_bibliotecario_escreve_no_catalogo(self):
+        self.autenticar(self.bibliotecario)
+
+        resposta = self.client.post('/api/autores/', {'nome': 'Novo', 'nacionalidade': 'BR'}, format='json')
+
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Autor.objects.filter(nome='Novo').exists())
+
+    def test_emprestimo_nao_pode_ser_criado_pela_rota_generica(self):
+        self.autenticar(self.bibliotecario)
+
+        resposta = self.client.post('/api/emprestimos/', {
+            'exemplar': self.exemplar.id, 'usuario': self.leitor.id,
+            'data_retirada': '2026-01-01',
+        }, format='json')
+
+        self.assertEqual(resposta.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertFalse(Emprestimo.objects.exists())
+
+    def test_leitor_nao_ve_a_lista_de_emprestimos(self):
+        self.autenticar(self.leitor)
+
+        self.assertEqual(self.client.get('/api/emprestimos/').status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_bibliotecario_ve_a_lista_de_emprestimos(self):
+        self.autenticar(self.bibliotecario)
+        self.emprestar(self.leitor.id, self.livro.id)
+
+        resposta = self.client.get('/api/emprestimos/')
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resposta.json()), 1)

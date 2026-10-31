@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from biblioteca import services
 from biblioteca.models import Autor, Categoria, Livro, Editora, Usuario, Exemplar, Emprestimo
-from biblioteca.permissions import IsBibliotecario
+from biblioteca.permissions import IsBibliotecario, IsBibliotecarioOuSomenteLeitura
 from biblioteca.services import ErroDeNegocio
 from biblioteca.serializers import (
     AutorSerializer, CategoriaSerializer, LivroSerializer, EditoraSerializer, UsuarioSerializer, ExemplarSerializer, EmprestimoSerializer,
@@ -19,18 +19,22 @@ def _primeiro_erro(erros):
 class AutorViewSet(viewsets.ModelViewSet):
     queryset = Autor.objects.all()
     serializer_class = AutorSerializer
+    permission_classes = [IsAuthenticated, IsBibliotecarioOuSomenteLeitura]
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
+    permission_classes = [IsAuthenticated, IsBibliotecarioOuSomenteLeitura]
 
 class LivroViewSet(viewsets.ModelViewSet):
     queryset = Livro.objects.all()
     serializer_class = LivroSerializer
+    permission_classes = [IsAuthenticated, IsBibliotecarioOuSomenteLeitura]
 
 class EditoraViewSet(viewsets.ModelViewSet):
     queryset = Editora.objects.all()
     serializer_class = EditoraSerializer
+    permission_classes = [IsAuthenticated, IsBibliotecarioOuSomenteLeitura]
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -40,11 +44,13 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 class ExemplarViewSet(viewsets.ModelViewSet):
     queryset = Exemplar.objects.all()
     serializer_class = ExemplarSerializer
+    permission_classes = [IsAuthenticated, IsBibliotecarioOuSomenteLeitura]
 
-class EmprestimoViewSet(viewsets.ModelViewSet):
+class EmprestimoViewSet(viewsets.ReadOnlyModelViewSet):
+    # Emprestimos so nascem e terminam pelas actions abaixo (services.py).
     queryset = Emprestimo.objects.all()
     serializer_class = EmprestimoSerializer
-
+    permission_classes = [IsAuthenticated, IsBibliotecario]
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated, IsBibliotecario])
     def registrar_emprestimo(self, request):
