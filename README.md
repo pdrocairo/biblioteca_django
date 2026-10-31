@@ -323,7 +323,7 @@ PostgreSQL), então o deploy é um "Blueprint":
    |---|---|---|
    | `DJANGO_SUPERUSER_USERNAME` | `bibliotech-api` | login do primeiro bibliotecário |
    | `DJANGO_SUPERUSER_EMAIL` | `bibliotech-api` | e-mail dele |
-   | `DJANGO_SUPERUSER_PASSWORD` | `bibliotech-api` | uma senha forte |
+   | `DJANGO_SUPERUSER_PASSWORD` | `bibliotech-api` | uma senha forte (nesse modo o Django **não** valida a senha, então escolha uma boa) |
    | `CORS_ALLOWED_ORIGINS` | `bibliotech-api` | URL do front-end, ex.: `https://bibliotech-web.onrender.com` |
    | `API_URL` | `bibliotech-web` | URL da API, ex.: `https://bibliotech-api.onrender.com` |
 

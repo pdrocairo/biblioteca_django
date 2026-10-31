@@ -90,13 +90,27 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
-CORS_ALLOWED_ORIGINS = config(
-    "CORS_ALLOWED_ORIGINS",
-    default="http://127.0.0.1:5500,http://localhost:5500",
-    cast=Csv(),
-)
 
-CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
+
+def _normalizar_origem(origem):
+    """Tolera '/' no fim e falta de esquema ao colar URLs no painel."""
+    origem = origem.strip().rstrip("/")
+    return origem if "://" in origem else f"https://{origem}"
+
+
+CORS_ALLOWED_ORIGINS = [
+    _normalizar_origem(origem)
+    for origem in config(
+        "CORS_ALLOWED_ORIGINS",
+        default="http://127.0.0.1:5500,http://localhost:5500",
+        cast=Csv(),
+    )
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    _normalizar_origem(origem)
+    for origem in config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
+]
 if RENDER_EXTERNAL_HOSTNAME:
     CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 

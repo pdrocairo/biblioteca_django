@@ -8,7 +8,6 @@ services:
     # No plano gratuito nao ha Shell: o primeiro bibliotecario e criado pelas
     # variaveis DJANGO_SUPERUSER_* (se ele ja existir, o comando so falha e segue).
     startCommand: sh -c "python manage.py createsuperuser --noinput || true; gunicorn bibliotech_django.wsgi"
-    healthCheckPath: /admin/login/
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -32,7 +31,8 @@ services:
   - type: web
     name: bibliotech-web
     runtime: static
-    buildCommand: echo "window.BIBLIOTECH_API_BASE = \"${API_URL}/api\";" > frontend/config.js
+    # Falha o build se API_URL nao estiver definida, em vez de publicar um front quebrado.
+    buildCommand: test -n "$API_URL" && echo "window.BIBLIOTECH_API_BASE = \"${API_URL%/}/api\";" > frontend/config.js
     staticPublishPath: ./frontend
     envVars:
       # URL publica da API, ex.: https://bibliotech-api.onrender.com
