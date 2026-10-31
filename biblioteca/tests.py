@@ -270,3 +270,16 @@ class ProtecaoDoHistoricoTests(BaseTestCase):
         with self.assertRaises(ProtectedError):
             self.exemplar.delete()
         self.assertEqual(Emprestimo.objects.count(), 1)
+
+
+class SuperusuarioTests(APITestCase):
+    def test_superusuario_novo_ja_e_bibliotecario(self):
+        user = User.objects.create_superuser(username='admin', password=SENHA)
+
+        self.assertEqual(user.usuario.perfil, Usuario.PERFIL_BIBLIOTECARIO)
+        self.assertEqual(Usuario.objects.filter(user=user).count(), 1)
+
+    def test_usuario_comum_nao_ganha_perfil_automatico(self):
+        user = User.objects.create_user(username='comum', password=SENHA)
+
+        self.assertFalse(Usuario.objects.filter(user=user).exists())
