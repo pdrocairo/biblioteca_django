@@ -28,7 +28,7 @@ simples em HTML/CSS/JavaScript para demonstração.
 - **Backend:** Python 3.14, Django 6.1, Django REST Framework
 - **Banco de dados:** PostgreSQL
 - **Autenticação:** JWT (`djangorestframework-simplejwt`)
-- **Infra:** Docker e Docker Compose
+- **Infra:** Docker, Docker Compose e deploy no Render (`gunicorn` + `whitenoise`)
 - **Front-end:** HTML, CSS e JavaScript puro (sem frameworks)
 - **Outras libs:** `django-cors-headers`, `psycopg2-binary`, `python-decouple`
 
@@ -47,6 +47,8 @@ biblioteca_django/
 ├── bibliotech_django/      # Configuração do projeto (settings, urls raiz)
 ├── frontend/               # Front-end estático (HTML/CSS/JS)
 ├── Dockerfile
+├── render.yaml             # Blueprint de deploy (Render)
+├── build.sh                # Build da API no Render
 ├── docker-compose.yml
 ├── .env.example            # Modelo das variáveis de ambiente
 ├── manage.py
@@ -179,7 +181,7 @@ A API estará em `http://127.0.0.1:8000/api/`. Para o front-end, siga o passo 4
 da seção do Docker.
 
 > ⚠️ O front-end espera a API em `http://127.0.0.1:8000`. Se mudar a porta do
-> Django, ajuste a constante `API_BASE` em `frontend/script.js`.
+> Django, ajuste o endereço em `frontend/config.js`.
 
 ---
 
@@ -308,11 +310,44 @@ A senha é validada pelos validadores do Django e guardada com hash. Ela nunca
 
 ---
 
+## ☁️ Deploy no Render
+
+O arquivo [`render.yaml`](render.yaml) descreve tudo (API, front-end estático e
+PostgreSQL), então o deploy é um "Blueprint":
+
+1. Suba o projeto para o GitHub e crie uma conta em [render.com](https://render.com).
+2. No painel: **New → Blueprint**, escolha este repositório e confirme.
+3. Quando o Render pedir as variáveis marcadas para preenchimento manual, informe:
+
+   | Variável | Serviço | Valor |
+   |---|---|---|
+   | `DJANGO_SUPERUSER_USERNAME` | `bibliotech-api` | login do primeiro bibliotecário |
+   | `DJANGO_SUPERUSER_EMAIL` | `bibliotech-api` | e-mail dele |
+   | `DJANGO_SUPERUSER_PASSWORD` | `bibliotech-api` | uma senha forte |
+   | `CORS_ALLOWED_ORIGINS` | `bibliotech-api` | URL do front-end, ex.: `https://bibliotech-web.onrender.com` |
+   | `API_URL` | `bibliotech-web` | URL da API, ex.: `https://bibliotech-api.onrender.com` |
+
+4. Aguarde o build. A `SECRET_KEY` é gerada pelo Render, e a `DATABASE_URL` vem do banco.
+
+> Se o nome `bibliotech-api` ou `bibliotech-web` já estiver em uso, o Render
+> acrescenta um sufixo à URL. Nesse caso, corrija `CORS_ALLOWED_ORIGINS` e `API_URL`
+> com as URLs reais (em **Environment**) e faça um novo deploy dos dois serviços.
+
+O primeiro bibliotecário é criado na subida da API com as variáveis
+`DJANGO_SUPERUSER_*`, porque o plano gratuito não oferece Shell. Depois, ele
+cadastra os demais usuários em `POST /api/usuarios/`.
+
+**Limites do plano gratuito** (confira as condições atuais no site do Render):
+a API "dorme" após alguns minutos sem uso e a primeira requisição depois disso
+demora cerca de um minuto; o PostgreSQL gratuito expira depois de 30 dias.
+Serve para portfólio, mas não para dados que você precise manter.
+
+---
+
 ## 🗺️ Próximos passos
 
 - [ ] Documentação automática da API (Swagger com `drf-spectacular`)
-- [ ] Servidor de produção na imagem Docker (`gunicorn` + `whitenoise`)
-- [ ] Deploy do backend (Render/Railway) e do front-end (Vercel)
+- [ ] Usar `gunicorn` também na imagem Docker (hoje ela usa o `runserver`, só para desenvolvimento)
 - [ ] Migrar o front-end para React
 
 > Dívida conhecida: `Usuario` ainda repete `nome` e `email` que o `User` do
